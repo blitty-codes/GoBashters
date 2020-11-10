@@ -38,7 +38,7 @@ func main() {
 
 		conn.Write([]byte(input))
 
-		if input == "shell_exec\r\n" {
+		if input == "shell_exec\n" {
 			fmt.Print("> ")
 			input, _ := reader.ReadString('\n')
 			conn.Write([]byte(input))
