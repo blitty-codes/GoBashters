@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"runtime"
 )
 
 const (
@@ -35,17 +36,30 @@ func main() {
 		input, _ := reader.ReadString('\n')
 
 		fmt.Println(input)
+		if runtime.GOOS == "windows" {
+			conn.Write([]byte("W" + input))
+		} else {
+			conn.Write([]byte(input))
+		}
 
-		conn.Write([]byte(input))
-
-		if input == "shell_exec\n" {
+		if input == "shell_exec\n" || input == "shell_exec\r\n" {
 			fmt.Print("> ")
 			input, _ := reader.ReadString('\n')
-			conn.Write([]byte(input))
+
+			if runtime.GOOS == "windows" {
+				conn.Write([]byte("W" + input))
+			} else {
+				conn.Write([]byte(input))
+			}
 		}
 
 		message, _ := bufio.NewReader(conn).ReadString('\n')
 
 		log.Println("Server relay:", message)
+
+		if input == "exit\n" || input == "exit\r\n" {
+			conn.Close()
+			break
+		}
 	}
 }
