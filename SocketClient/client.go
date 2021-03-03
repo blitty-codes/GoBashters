@@ -35,23 +35,30 @@ func main() {
 
 		input, _ := reader.ReadString('\n')
 
-		fmt.Println(input)
-		if runtime.GOOS == "windows" {
-			conn.Write([]byte("W" + input))
-		} else {
-			conn.Write([]byte(input))
+		if input == "file\n" || input == "file\r\n" {
+			fmt.Print("- name: ")
+			title, _ := reader.ReadString('\n')
+
+			fmt.Print("- body: ")
+			msg, _ := reader.ReadString('$')
+
+			fmt.Println(msg)
+			input = "file.000" + title[:len(title)-1] + ".000==." + string(msg[:len(msg)-1]) + "\n==.."
+			fmt.Println("input: " + input)
 		}
+
+		sendCommand(conn, input)
 
 		if input == "shell_exec\n" || input == "shell_exec\r\n" {
 			fmt.Print("> ")
 			input, _ := reader.ReadString('\n')
 
-			if runtime.GOOS == "windows" {
-				conn.Write([]byte("W" + input))
-			} else {
-				conn.Write([]byte(input))
-			}
+			sendCommand(conn, input)
 		}
+
+		// TODO: Can we open a bash shell on another cmd?
+		// to automize reverse shell
+		// connect to it by nc -lnvp 4242"
 
 		message, _ := bufio.NewReader(conn).ReadString('\n')
 
@@ -61,5 +68,14 @@ func main() {
 			conn.Close()
 			break
 		}
+	}
+}
+
+func sendCommand(conn net.Conn, input string) {
+	input = input + "\000"
+	if runtime.GOOS == "windows" {
+		conn.Write([]byte("W" + input))
+	} else {
+		conn.Write([]byte(input))
 	}
 }
