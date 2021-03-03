@@ -39,11 +39,11 @@ func main() {
 			fmt.Print("- name: ")
 			title, _ := reader.ReadString('\n')
 
-			fmt.Print("- body: ")
+			fmt.Print("- body (use $ [enter] at the end): ")
 			msg, _ := reader.ReadString('$')
 
 			fmt.Println(msg)
-			input = "file.000" + title[:len(title)-1] + ".000==." + string(msg[:len(msg)-1]) + "\n==.."
+			input = "file.000" + title[:len(title)-1] + ".000==." + string(msg[:len(msg)-1]) + "\n==."
 			fmt.Println("input: " + input)
 		}
 
